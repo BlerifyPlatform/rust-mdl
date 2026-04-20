@@ -1,0 +1,51 @@
+name: "PR validations"
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  CI: true
+
+jobs:
+  sanityCheck:
+    name: naming convention
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate branch name
+        run: |
+          BRANCH_NAME=$(echo "${{ github.head_ref }}")
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|hotfix|release|chore|test|experiment)/.+$ ]]; then
+            echo "::error::Invalid branch name: $BRANCH_NAME"
+            exit 1
+          fi
+      - name: Validate commit messages
+        run: |
+          echo "🔍 Validating commit messages in PR"
+
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          echo "🧾 Commit range: $BASE_SHA..$HEAD_SHA"
+          COMMITS=$(git rev-list $BASE_SHA..$HEAD_SHA)
+
+          REGEX='^((feat|fix|chore|docs|style|refactor|test|build|perf|revert)\([^)]+\):\s*[a-z].+|Merge branch .+|Merge pull request #[0-9]+ from .+|Merge remote-tracking branch '\''.+'\'' into .+|Revert "Merge pull request #[0-9]+ from .+")$'
+
+          for COMMIT in $COMMITS; do
+            MSG=$(git log --format=%s -n 1 "$COMMIT")
+            echo "🔎 Checking: $MSG"
+            if ! echo "$MSG" | grep -Eq "$REGEX"; then
+              echo "::error file=.git/log::❌ Invalid commit message: '$MSG'"
+              echo "Expected format: type(scope): lowercase description"
+              exit 1
+            fi
+          done
+          echo "✅ All commit messages are valid."
