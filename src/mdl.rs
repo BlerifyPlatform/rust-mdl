@@ -8,14 +8,15 @@ pub struct DocumentResponse {
 }
 
 impl BlerifyClient {
-    pub async fn get_document(&self) -> Result<DocumentResponse, reqwest::Error> {
-        let url = format!("{}/mdl/document", self.base_url);
+    pub async fn get_document(&self, document_id: &str) -> Result<DocumentResponse, reqwest::Error> {
+        let url = format!("{}/mdl/document/{}", self.base_url, document_id);
 
         let response = self.client
             .get(&url)
             .bearer_auth(&self.access_token)
             .send()
-            .await?;
+            .await?
+            .error_for_status()?;
 
         let json = response.json::<DocumentResponse>().await?;
 
