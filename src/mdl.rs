@@ -1,7 +1,14 @@
+use serde::Deserialize;
 use crate::client::BlerifyClient;
 
+#[derive(Debug, Deserialize)]
+pub struct DocumentResponse {
+    pub id: String,
+    pub status: String,
+}
+
 impl BlerifyClient {
-    pub async fn get_document(&self) -> Result<String, reqwest::Error> {
+    pub async fn get_document(&self) -> Result<DocumentResponse, reqwest::Error> {
         let url = format!("{}/mdl/document", self.base_url);
 
         let response = self.client
@@ -10,8 +17,8 @@ impl BlerifyClient {
             .send()
             .await?;
 
-        let text = response.text().await?;
+        let json = response.json::<DocumentResponse>().await?;
 
-        Ok(text)
+        Ok(json)
     }
 }
