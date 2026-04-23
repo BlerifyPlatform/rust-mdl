@@ -26,10 +26,10 @@ struct Claims {
 
 pub async fn get_access_token() -> Result<String, reqwest::Error> {
     let data = fs::read_to_string("credentials.json")
-        .expect("No se pudo leer el archivo");
+        .expect("Failed to read credentials file");
 
     let creds: Credentials = serde_json::from_str(&data)
-        .expect("Error al parsear JSON");
+        .expect("Failed to parse JSON");
 
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -55,7 +55,8 @@ pub async fn get_access_token() -> Result<String, reqwest::Error> {
 
     let client = Client::new();
 
-    let url = "https://api.demo.blerify.com/auth/v2/protocol/openid-connect/token";
+    let url = std::env::var("AUTH_URL")
+    .unwrap_or("https://api.demo.blerify.com/auth/v2/protocol/openid-connect/token".to_string());
 
     let params = [
     ("client_id", creds.client_id.as_str()),
