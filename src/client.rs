@@ -1,5 +1,6 @@
-use reqwest::Client;
 use crate::auth::get_access_token;
+use crate::error::BlerifyError;
+use reqwest::Client;
 
 pub struct BlerifyClient {
     pub base_url: String,
@@ -16,7 +17,7 @@ impl BlerifyClient {
         }
     }
 
-    pub async fn new_with_auth(base_url: String) -> Result<Self, reqwest::Error> {
+    pub async fn new_with_auth(base_url: String) -> Result<Self, BlerifyError> {
         let token = get_access_token().await?;
 
         Ok(Self {
