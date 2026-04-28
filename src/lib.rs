@@ -1,18 +1,19 @@
 //! Rust client for Blerify's Issuance API.
 //!
 //! Provides service-account authentication, a token cache, and an HTTP client
-//! scoped to a single `(organization, project)` pair. Endpoint methods land
-//! in upcoming slices:
+//! scoped to a single `(organization, project)` pair. Endpoint methods:
 //!
-//! - `generate()`  — POST `/credentials` (this slice)
-//! - `assemble()`  — PUT `/credentials/{id}/sign` (slice 1.4)
+//! - [`BlerifyClient::generate`] — `POST /credentials`
+//! - [`BlerifyClient::assemble`] — `PUT /credentials/{id}/sign`
 
+pub mod assemble;
 pub mod auth;
 pub mod client;
 pub mod credentials;
 pub mod error;
 pub mod generate;
 
+pub use assemble::{AssembleRequest, AssembleResponse};
 pub use client::BlerifyClient;
 pub use credentials::ServiceAccountCredentials;
 pub use error::BlerifyError;

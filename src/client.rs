@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use reqwest::{Method, RequestBuilder};
+use serde::de::DeserializeOwned;
 use uuid::Uuid;
 
 use crate::auth::TokenManager;
@@ -98,6 +99,33 @@ impl BlerifyClient {
             .header("Content-Type", "application/json")
             .header("correlation-id", cid.to_string()))
     }
+}
+
+/// Decode a JSON response, mapping non-2xx into [`BlerifyError::Server`].
+///
+/// Used by every endpoint method in this crate to keep error envelope
+/// handling consistent.
+pub(crate) async fn decode_json_response<T: DeserializeOwned>(
+    response: reqwest::Response,
+) -> Result<T, BlerifyError> {
+    let status = response.status();
+    if !status.is_success() {
+        let body = response
+            .json::<serde_json::Value>()
+            .await
+            .unwrap_or(serde_json::Value::Null);
+        let message = body
+            .get("message")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        return Err(BlerifyError::Server {
+            status: status.as_u16(),
+            message,
+            body,
+        });
+    }
+    Ok(response.json::<T>().await?)
 }
 
 #[cfg(test)]
