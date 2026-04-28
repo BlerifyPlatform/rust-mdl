@@ -1,9 +1,9 @@
-use std::fs;
-use serde::{Deserialize, Serialize};
-use jsonwebtoken::{encode, Header, EncodingKey};
-use std::time::{SystemTime, UNIX_EPOCH};
-use reqwest::Client;
 use crate::error::BlerifyError;
+use jsonwebtoken::{encode, EncodingKey, Header};
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Deserialize)]
 struct Credentials {
@@ -32,9 +32,7 @@ pub async fn get_access_token() -> Result<String, BlerifyError> {
     let data = fs::read_to_string("credentials.json")?;
     let creds: Credentials = serde_json::from_str(&data)?;
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)?
-        .as_secs();
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
     let claims = Claims {
         iss: creds.client_id.clone(),
@@ -53,8 +51,9 @@ pub async fn get_access_token() -> Result<String, BlerifyError> {
 
     let client = Client::new();
 
-    let url = std::env::var("AUTH_URL")
-        .unwrap_or("https://api.demo.blerify.com/auth/v2/protocol/openid-connect/token".to_string());
+    let url = std::env::var("AUTH_URL").unwrap_or(
+        "https://api.demo.blerify.com/auth/v2/protocol/openid-connect/token".to_string(),
+    );
 
     let params = [
         ("client_id", creds.client_id.as_str()),

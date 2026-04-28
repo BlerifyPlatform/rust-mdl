@@ -1,6 +1,6 @@
-use reqwest::Client;
 use crate::auth::get_access_token;
 use crate::error::BlerifyError;
+use reqwest::Client;
 
 pub struct BlerifyClient {
     pub base_url: String,

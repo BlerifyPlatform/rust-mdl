@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::client::BlerifyClient;
 use crate::error::BlerifyError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct DocumentResponse {
@@ -21,15 +21,11 @@ pub struct CreateDocumentResponse {
 }
 
 impl BlerifyClient {
-    
-    pub async fn get_document(
-        &self,
-        document_id: &str
-    ) -> Result<DocumentResponse, BlerifyError> {
-
+    pub async fn get_document(&self, document_id: &str) -> Result<DocumentResponse, BlerifyError> {
         let url = format!("{}/mdl/document/{}", self.base_url, document_id);
 
-        let response = self.client
+        let response = self
+            .client
             .get(&url)
             .bearer_auth(&self.access_token)
             .send()
@@ -43,12 +39,12 @@ impl BlerifyClient {
 
     pub async fn create_document(
         &self,
-        request: CreateDocumentRequest
+        request: CreateDocumentRequest,
     ) -> Result<CreateDocumentResponse, BlerifyError> {
-
         let url = format!("{}/mdl/document", self.base_url);
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .bearer_auth(&self.access_token)
             .json(&request)
