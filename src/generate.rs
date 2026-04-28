@@ -34,34 +34,45 @@ pub struct AdditionalData {
     pub namespaces: Vec<NamespaceEntry>,
 }
 
-/// All `mdlData` fields are optional on the wire; populate only what the
-/// caller wants to embed in the credential.
-#[derive(Debug, Clone, Default, Serialize)]
+/// mDL data elements per ISO/IEC 18013-5:2021 §7.2.1 Table 5.
+///
+/// Mandatory (M) fields are non-`Option`; optional (O) fields are `Option<T>`
+/// and skipped from the wire when `None`. Use [`MdlData::new`] to construct
+/// with only the mandatory fields, then assign optional fields directly:
+///
+/// ```ignore
+/// let mut data = MdlData::new(
+///     "Doe", "John", "1987-03-15", "2025-10-15", "2028-09-30",
+///     "US", "Acme", "8-203-1365",
+///     /* portrait JPEG hex */ "FFD8FF...".to_string(),
+///     vec![DrivingPrivilege { /* ... */ }],
+///     "PA",
+/// );
+/// data.nationality = Some("PA".into());
+/// ```
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub struct MdlData {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub family_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub given_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub birth_date: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub issue_date: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiry_date: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub issuing_country: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub issuing_authority: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub document_number: Option<String>,
-    /// Hex-encoded JPEG bytes (uppercase or lowercase).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub portrait: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub driving_privileges: Option<Vec<DrivingPrivilege>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub un_distinguishing_sign: Option<String>,
+    // ---- Mandatory (per ISO 18013-5 §7.2.1 Table 5) ----
+    pub family_name: String,
+    pub given_name: String,
+    /// Day, month and year of birth — `full-date` (YYYY-MM-DD).
+    pub birth_date: String,
+    /// `tdate` or `full-date` — date the mDL was issued.
+    pub issue_date: String,
+    /// `tdate` or `full-date` — date the mDL expires.
+    pub expiry_date: String,
+    /// Alpha-2 country code (ISO 3166-1) of the issuing authority.
+    pub issuing_country: String,
+    pub issuing_authority: String,
+    pub document_number: String,
+    /// Hex-encoded JPEG/JPEG2000 bytes (uppercase or lowercase). Per
+    /// ISO 18013-2:2020 Annex D for the portrait image format.
+    pub portrait: String,
+    pub driving_privileges: Vec<DrivingPrivilege>,
+    /// Distinguishing sign per ISO/IEC 18013-1:2018 Annex F.
+    pub un_distinguishing_sign: String,
+    // ---- Optional (per ISO 18013-5 §7.2.1 Table 5) ----
     #[serde(skip_serializing_if = "Option::is_none")]
     pub administrative_number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -91,6 +102,53 @@ pub struct MdlData {
     /// Hex-encoded JPEG bytes (uppercase or lowercase).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signature_usual_mark: Option<String>,
+}
+
+impl MdlData {
+    /// Construct with the 11 mandatory fields per ISO 18013-5 §7.2.1 Table 5.
+    /// All optional fields default to `None`; assign them directly afterwards.
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        family_name: impl Into<String>,
+        given_name: impl Into<String>,
+        birth_date: impl Into<String>,
+        issue_date: impl Into<String>,
+        expiry_date: impl Into<String>,
+        issuing_country: impl Into<String>,
+        issuing_authority: impl Into<String>,
+        document_number: impl Into<String>,
+        portrait_hex: impl Into<String>,
+        driving_privileges: Vec<DrivingPrivilege>,
+        un_distinguishing_sign: impl Into<String>,
+    ) -> Self {
+        Self {
+            family_name: family_name.into(),
+            given_name: given_name.into(),
+            birth_date: birth_date.into(),
+            issue_date: issue_date.into(),
+            expiry_date: expiry_date.into(),
+            issuing_country: issuing_country.into(),
+            issuing_authority: issuing_authority.into(),
+            document_number: document_number.into(),
+            portrait: portrait_hex.into(),
+            driving_privileges,
+            un_distinguishing_sign: un_distinguishing_sign.into(),
+            administrative_number: None,
+            sex: None,
+            height: None,
+            weight: None,
+            eye_colour: None,
+            birth_place: None,
+            resident_address: None,
+            issuing_jurisdiction: None,
+            nationality: None,
+            resident_city: None,
+            resident_state: None,
+            resident_postal_code: None,
+            resident_country: None,
+            signature_usual_mark: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -270,17 +328,30 @@ mod tests {
     use super::*;
 
     fn sample_request() -> GenerateRequest {
+        let mut mdl_data = MdlData::new(
+            "Maravi",
+            "Washington",
+            "1987-03-15",
+            "2025-10-15",
+            "2028-09-30",
+            "US",
+            "Acme",
+            "8-203-1365",
+            "FFD8FF",
+            vec![DrivingPrivilege {
+                vehicle_category_code: "C".into(),
+                issue_date: "2025-08-25".into(),
+                expiry_date: "2028-09-30".into(),
+                codes: vec![DrivingCode { code: "210".into() }],
+            }],
+            "PA",
+        );
+        mdl_data.nationality = Some("PA".into());
+
         GenerateRequest {
             template_id: "ca214a52-2291-4ad6-9b87-3d8fe988b0cc".into(),
             additional_data: AdditionalData {
-                mdl_data: MdlData {
-                    family_name: Some("Maravi".into()),
-                    given_name: Some("Washington".into()),
-                    birth_date: Some("1987-03-15".into()),
-                    issuing_country: Some("US".into()),
-                    nationality: Some("PA".into()),
-                    ..Default::default()
-                },
+                mdl_data,
                 validity_info: ValidityInfo {
                     signed: "2025-10-28T10:10:18Z".into(),
                     valid_from: "2025-10-29T20:46:25Z".into(),

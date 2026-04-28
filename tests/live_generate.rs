@@ -15,7 +15,8 @@
 //! project. CI does not set `BLERIFY_RUN_LIVE_TESTS` so the test is skipped.
 
 use rust_mdl::generate::{
-    AdditionalData, GenerateRequest, JwkP256, MdlData, Options, OrganizationUser, ValidityInfo,
+    AdditionalData, DrivingCode, DrivingPrivilege, GenerateRequest, JwkP256, MdlData, Options,
+    OrganizationUser, ValidityInfo,
 };
 use rust_mdl::{BlerifyClient, ServiceAccountCredentials};
 
@@ -52,22 +53,33 @@ async fn generate_round_trip_against_staging() {
 
     let client = BlerifyClient::new(base_url, creds, project_id);
 
+    let mut mdl_data = MdlData::new(
+        "Maravi",
+        "Washington",
+        "1987-03-15",
+        "2025-10-15",
+        "2028-09-30",
+        "US",
+        "Acme",
+        "8-203-1365",
+        // Hex-encoded JPEG. Use a minimal placeholder for the integration test;
+        // a real issuer would resize and JPEG-encode the citizen photo per
+        // ISO 18013-5 §7.2.2 (FaceTec-grade JPEG, ≤30 KB target — see RNPN cronograma).
+        "FFD8FFE000",
+        vec![DrivingPrivilege {
+            vehicle_category_code: "C".into(),
+            issue_date: "2025-08-25".into(),
+            expiry_date: "2028-09-30".into(),
+            codes: vec![DrivingCode { code: "210".into() }],
+        }],
+        "PA",
+    );
+    mdl_data.nationality = Some("PA".into());
+
     let request = GenerateRequest {
         template_id,
         additional_data: AdditionalData {
-            mdl_data: MdlData {
-                family_name: Some("Maravi".into()),
-                given_name: Some("Washington".into()),
-                birth_date: Some("1987-03-15".into()),
-                issue_date: Some("2025-10-15".into()),
-                expiry_date: Some("2028-09-30".into()),
-                issuing_country: Some("US".into()),
-                issuing_authority: Some("Acme".into()),
-                document_number: Some("8-203-1365".into()),
-                un_distinguishing_sign: Some("PA".into()),
-                nationality: Some("PA".into()),
-                ..Default::default()
-            },
+            mdl_data,
             validity_info: ValidityInfo {
                 signed: "2025-10-28T10:10:18Z".into(),
                 valid_from: "2025-10-29T20:46:25Z".into(),
