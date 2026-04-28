@@ -1,53 +1,32 @@
-use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug)]
+/// Errors surfaced by the Blerify Issuance API client.
+#[derive(Debug, Error)]
 pub enum BlerifyError {
-    Reqwest(reqwest::Error),
-    Io(std::io::Error),
-    Serde(serde_json::Error),
-    Jwt(jsonwebtoken::errors::Error),
+    #[error("transport error: {0}")]
+    Transport(#[from] reqwest::Error),
+
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
+
+    #[error("jwt error: {0}")]
+    Jwt(#[from] jsonwebtoken::errors::Error),
+
+    #[error("system time error: {0}")]
+    Time(#[from] std::time::SystemTimeError),
+
+    /// Non-2xx response from the Issuance API. `body` carries whatever the
+    /// server returned (parsed JSON if possible, otherwise raw text).
+    #[error("server returned {status}: {message}")]
+    Server {
+        status: u16,
+        message: String,
+        body: serde_json::Value,
+    },
+
+    #[error("{0}")]
     Custom(String),
-}
-
-impl fmt::Display for BlerifyError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            BlerifyError::Reqwest(e) => write!(f, "Request error: {}", e),
-            BlerifyError::Io(e) => write!(f, "IO error: {}", e),
-            BlerifyError::Serde(e) => write!(f, "Serialization error: {}", e),
-            BlerifyError::Jwt(e) => write!(f, "JWT error: {}", e),
-            BlerifyError::Custom(msg) => write!(f, "{}", msg),
-        }
-    }
-}
-
-impl From<reqwest::Error> for BlerifyError {
-    fn from(err: reqwest::Error) -> Self {
-        BlerifyError::Reqwest(err)
-    }
-}
-
-impl From<std::io::Error> for BlerifyError {
-    fn from(err: std::io::Error) -> Self {
-        BlerifyError::Io(err)
-    }
-}
-
-impl From<serde_json::Error> for BlerifyError {
-    fn from(err: serde_json::Error) -> Self {
-        BlerifyError::Serde(err)
-    }
-}
-
-impl From<jsonwebtoken::errors::Error> for BlerifyError {
-    fn from(err: jsonwebtoken::errors::Error) -> Self {
-        BlerifyError::Jwt(err)
-    }
-}
-
-// 👇 ESTE VA SEPARADO (IMPORTANTE)
-impl From<std::time::SystemTimeError> for BlerifyError {
-    fn from(err: std::time::SystemTimeError) -> Self {
-        BlerifyError::Custom(format!("Time error: {}", err))
-    }
 }
