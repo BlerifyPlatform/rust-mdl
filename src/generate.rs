@@ -4,7 +4,7 @@
 
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, instrument};
 use uuid::Uuid;
 
 use crate::client::{decode_json_response, BlerifyClient};
@@ -278,6 +278,15 @@ impl BlerifyClient {
     ///
     /// Returns the server-assigned credential id (with `0x` prefix) and the
     /// `signingMessage` (base64url-encoded ToBeSigned bytes).
+    #[instrument(
+        skip_all,
+        fields(
+            org_id = %self.org_id(),
+            project_id = %self.project_id(),
+            template_id = %request.template_id,
+            correlation_id = ?correlation_id,
+        ),
+    )]
     pub async fn generate(
         &self,
         request: &GenerateRequest,

@@ -11,7 +11,7 @@
 
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, instrument};
 use uuid::Uuid;
 
 use crate::client::{decode_json_response, BlerifyClient};
@@ -52,6 +52,16 @@ impl BlerifyClient {
     /// `credential_id` is the `0x`-prefixed identifier returned by
     /// [`BlerifyClient::generate`] — pass it through verbatim, the path
     /// preserves the prefix.
+    #[instrument(
+        skip_all,
+        fields(
+            org_id = %self.org_id(),
+            project_id = %self.project_id(),
+            template_id = %request.template_id,
+            credential_id,
+            correlation_id = ?correlation_id,
+        ),
+    )]
     pub async fn assemble(
         &self,
         credential_id: &str,
