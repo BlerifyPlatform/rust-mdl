@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::client::BlerifyClient;
+use crate::client::{decode_json_response, BlerifyClient};
 use crate::error::BlerifyError;
 
 // ---------- request types ----------
@@ -298,29 +298,8 @@ impl BlerifyClient {
             .send()
             .await?;
 
-        decode_response(response).await
+        decode_json_response(response).await
     }
-}
-
-async fn decode_response(response: reqwest::Response) -> Result<GenerateResponse, BlerifyError> {
-    let status = response.status();
-    if !status.is_success() {
-        let body = response
-            .json::<serde_json::Value>()
-            .await
-            .unwrap_or(serde_json::Value::Null);
-        let message = body
-            .get("message")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string();
-        return Err(BlerifyError::Server {
-            status: status.as_u16(),
-            message,
-            body,
-        });
-    }
-    Ok(response.json::<GenerateResponse>().await?)
 }
 
 #[cfg(test)]
