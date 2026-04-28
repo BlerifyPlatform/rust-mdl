@@ -18,12 +18,7 @@ pub struct BlerifyClient {
     base_url: String,
     org_id: String,
     project_id: String,
-    // TODO(slice-1.3): `http` and `tokens` are read by `request()` below, which
-    // currently has no callers. Once `generate()` lands, both fields and the
-    // method become live and these allow attrs can be removed.
-    #[allow(dead_code)]
     http: reqwest::Client,
-    #[allow(dead_code)]
     tokens: Arc<TokenManager>,
 }
 
@@ -76,7 +71,6 @@ impl BlerifyClient {
 
     /// `/api/v1/organizations/{org}/projects/{project}` — common prefix for
     /// every credential-related endpoint on the Issuance API.
-    #[allow(dead_code)] // TODO(slice-1.3): consumed by `generate()`.
     pub(crate) fn project_base_path(&self) -> String {
         format!(
             "/api/v1/organizations/{}/projects/{}",
@@ -87,7 +81,6 @@ impl BlerifyClient {
     /// Build a request to `path` (relative to `base_url`) with the auth token,
     /// `Content-Type: application/json`, and `correlation-id` header set.
     /// Callers chain `.json(&body)` / `.send()` as usual.
-    #[allow(dead_code)] // TODO(slice-1.3): consumed by `generate()`.
     pub(crate) async fn request(
         &self,
         method: Method,
