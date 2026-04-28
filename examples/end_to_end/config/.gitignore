@@ -1,0 +1,6 @@
+# Never commit secrets — drop your service account, signing key, and cert here.
+*.json
+*.pem
+*.key
+!.gitignore
+!README.md

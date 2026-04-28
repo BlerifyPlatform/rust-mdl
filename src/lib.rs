@@ -5,6 +5,7 @@
 //!
 //! - [`BlerifyClient::generate`] — `POST /credentials`
 //! - [`BlerifyClient::assemble`] — `PUT /credentials/{id}/sign`
+//! - [`BlerifyClient::revoke`]   — `PUT /credentials/{id}/revoke`
 
 pub mod assemble;
 pub mod auth;
@@ -12,6 +13,7 @@ pub mod client;
 pub mod credentials;
 pub mod error;
 pub mod generate;
+pub mod revoke;
 
 pub use assemble::{AssembleRequest, AssembleResponse};
 pub use client::BlerifyClient;
@@ -22,3 +24,4 @@ pub use generate::{
     GeneratedCredential, JwkP256, MdlData, NamespaceEntry, Options, OrganizationUser, TemplateInfo,
     ValidityInfo,
 };
+pub use revoke::{RevokeRequest, RevokeResponse, StateChangeMetadata};
