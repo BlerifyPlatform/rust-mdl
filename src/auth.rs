@@ -4,9 +4,10 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
-use tracing::debug;
+use tracing::{debug, instrument};
 use uuid::Uuid;
 
+use crate::client::default_http_client;
 use crate::credentials::ServiceAccountCredentials;
 use crate::error::BlerifyError;
 
@@ -54,7 +55,7 @@ impl TokenManager {
     pub fn new(credentials: ServiceAccountCredentials) -> Self {
         Self {
             credentials,
-            http: Client::new(),
+            http: default_http_client(),
             cache: Mutex::new(None),
         }
     }
@@ -70,6 +71,7 @@ impl TokenManager {
     }
 
     /// Returns a valid access token, refreshing if cache is stale.
+    #[instrument(skip_all, fields(client_id = %self.credentials.client_id))]
     pub async fn access_token(&self) -> Result<String, BlerifyError> {
         let mut guard = self.cache.lock().await;
         let now = unix_now()?;

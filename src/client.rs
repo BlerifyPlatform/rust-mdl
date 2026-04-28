@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use reqwest::{Method, RequestBuilder};
 use serde::de::DeserializeOwned;
@@ -7,6 +8,25 @@ use uuid::Uuid;
 use crate::auth::TokenManager;
 use crate::credentials::ServiceAccountCredentials;
 use crate::error::BlerifyError;
+
+/// TCP connect deadline for outbound API calls.
+pub const DEFAULT_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+/// Total per-request deadline (connect + headers + body).
+pub const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Build a [`reqwest::Client`] with the library's default timeout configuration.
+///
+/// Used by [`BlerifyClient`] and [`crate::auth::TokenManager`] when callers
+/// don't supply their own client. Override by constructing with
+/// [`reqwest::Client::builder`] and passing the result to
+/// [`BlerifyClient::from_parts`] / [`crate::auth::TokenManager::with_client`].
+pub fn default_http_client() -> reqwest::Client {
+    reqwest::Client::builder()
+        .connect_timeout(DEFAULT_CONNECT_TIMEOUT)
+        .timeout(DEFAULT_REQUEST_TIMEOUT)
+        .build()
+        .expect("default reqwest client builds with system TLS")
+}
 
 /// HTTP client for Blerify's Issuance API.
 ///
@@ -32,12 +52,13 @@ impl BlerifyClient {
         project_id: impl Into<String>,
     ) -> Self {
         let org_id = credentials.organization_id.clone();
+        let http = default_http_client();
         Self {
             base_url: base_url.into(),
             org_id,
             project_id: project_id.into(),
-            http: reqwest::Client::new(),
-            tokens: Arc::new(TokenManager::new(credentials)),
+            http: http.clone(),
+            tokens: Arc::new(TokenManager::with_client(credentials, http)),
         }
     }
 
@@ -53,7 +74,25 @@ impl BlerifyClient {
             base_url: base_url.into(),
             org_id: org_id.into(),
             project_id: project_id.into(),
-            http: reqwest::Client::new(),
+            http: default_http_client(),
+            tokens,
+        }
+    }
+
+    /// Construct from caller-supplied parts. The `http` client is used for
+    /// API calls; the `TokenManager`'s internal client is used for auth.
+    pub fn from_parts(
+        base_url: impl Into<String>,
+        tokens: Arc<TokenManager>,
+        http: reqwest::Client,
+        org_id: impl Into<String>,
+        project_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            base_url: base_url.into(),
+            org_id: org_id.into(),
+            project_id: project_id.into(),
+            http,
             tokens,
         }
     }
