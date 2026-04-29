@@ -41,9 +41,17 @@ Drop these three files into `config/` (gitignored — see `config/README.md`):
 
 ## Run
 
+The example automatically loads `examples/end_to_end/.env` if present (set
+your env vars there once instead of exporting them every run):
+
 ```bash
+cp examples/end_to_end/.env.example examples/end_to_end/.env
+$EDITOR examples/end_to_end/.env       # fill in PROJECT_ID, TEMPLATE_ID, KID
 cargo run --example end_to_end
 ```
+
+`.env` is git-ignored; `.env.example` is the committed template. Shell env
+vars still take precedence over `.env` for one-off overrides.
 
 You should see four steps print, ending with `✓ end-to-end flow completed`.
 The example revokes its own test credential at the end so the run is

@@ -35,6 +35,10 @@ const DEFAULT_ISSUER_CERT_PATH: &str = "examples/end_to_end/config/issuer-cert.p
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Load `examples/end_to_end/.env` if present (created from `.env.example`).
+    // Errors are intentionally ignored — env vars set by the shell still win.
+    let _ = dotenvy::from_filename("examples/end_to_end/.env");
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()

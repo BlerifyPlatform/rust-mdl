@@ -1,0 +1,2 @@
+# `.env` may contain project IDs / kids — keep it local. Track `.env.example`.
+.env
