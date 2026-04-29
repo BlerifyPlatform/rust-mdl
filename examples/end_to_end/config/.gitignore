@@ -1,0 +1,9 @@
+# Never commit secrets — drop your service account and signing key here.
+*.json
+*.pem
+*.key
+!.gitignore
+!README.md
+# `issuer-cert.pem` is a public artifact (matches the demo project's
+# registered keypair, also shipped in the php-mdl repo) so we commit it.
+!issuer-cert.pem

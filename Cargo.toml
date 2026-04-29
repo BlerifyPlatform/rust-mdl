@@ -17,3 +17,14 @@ tracing = "0.1"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "test-util"] }
+# Used by examples (cargo run --example end_to_end).
+anyhow = "1"
+base64 = "0.21"
+dotenvy = "0.15"
+hex = "0.4"
+p256 = { version = "0.13", features = ["ecdsa", "pem", "pkcs8"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[example]]
+name = "end_to_end"
+path = "examples/end_to_end/main.rs"
