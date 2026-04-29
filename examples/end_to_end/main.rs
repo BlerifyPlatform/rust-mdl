@@ -85,9 +85,10 @@ async fn main() -> Result<()> {
         "US",
         "Blerify Demo",
         "8-203-1365",
-        // Hex-encoded JPEG bytes. Replace with a real portrait per ISO
-        // 18013-5 §7.2.2 in production.
-        "FFD8FFE000",
+        // Hex-encoded JPEG bytes. Bundled as a fixture so the example runs
+        // out-of-the-box; a real issuer would resize and JPEG-encode the
+        // citizen photo per ISO 18013-5 §7.2.2.
+        include_str!("fixtures/portrait.hex").trim(),
         vec![DrivingPrivilege {
             vehicle_category_code: "C".into(),
             issue_date: "2025-08-25".into(),
@@ -143,9 +144,13 @@ async fn main() -> Result<()> {
 
     // ---------------------------------------------------------------- 2. sign locally
     println!("\n[2/3] sign locally with EC P-256 (ES256)");
-    let signing_message_bytes = base64::engine::general_purpose::URL_SAFE_NO_PAD
+    // `signingMessage` is standard base64 (php-mdl uses `base64_decode()` which
+    // is standard-alphabet). Some senders return URL-safe base64 instead, so
+    // fall back to URL-safe on alphabet mismatch.
+    let signing_message_bytes = base64::engine::general_purpose::STANDARD
         .decode(&gen.signing_message)
-        .context("base64url decoding signingMessage")?;
+        .or_else(|_| base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&gen.signing_message))
+        .context("decoding signingMessage as base64 (tried standard then URL-safe)")?;
     let signature: Signature = signing_key.sign(&signing_message_bytes);
     let sig_bytes = signature.to_bytes();
     let signature_hex = hex::encode(sig_bytes);

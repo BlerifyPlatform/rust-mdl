@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("credential id: {}", gen.credential.id);
 
-    // 2. Sign `gen.signing_message` (base64url-encoded ToBeSigned bytes) with
+    // 2. Sign `gen.signing_message` (standard base64-encoded ToBeSigned bytes) with
     //    your HSM/KMS using ES256. The result must be 128 lowercase hex chars
     //    (raw r || s, PLAIN format). This step is the caller's responsibility
     //    — rust-mdl does not handle private keys.

@@ -232,8 +232,10 @@ impl Default for Options {
 #[derive(Debug, Clone, Deserialize)]
 pub struct GenerateResponse {
     pub credential: GeneratedCredential,
-    /// Base64url-encoded COSE `Signature1` ToBeSigned bytes. Sign with ES256
-    /// to produce the signature for [`crate::BlerifyClient::assemble`].
+    /// Standard base64-encoded COSE `Signature1` ToBeSigned bytes (php-mdl
+    /// uses `base64_decode()` which is standard alphabet, not base64url).
+    /// Sign the decoded bytes with ES256 to produce the signature for
+    /// [`crate::BlerifyClient::assemble`].
     #[serde(rename = "signingMessage")]
     pub signing_message: String,
 }
@@ -277,7 +279,7 @@ impl BlerifyClient {
     /// `None`, a fresh UUIDv4 is generated.
     ///
     /// Returns the server-assigned credential id (with `0x` prefix) and the
-    /// `signingMessage` (base64url-encoded ToBeSigned bytes).
+    /// `signingMessage` (standard base64-encoded ToBeSigned bytes).
     #[instrument(
         skip_all,
         fields(
