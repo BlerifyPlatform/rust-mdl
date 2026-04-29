@@ -21,6 +21,7 @@ use base64::Engine;
 use p256::ecdsa::signature::Signer;
 use p256::ecdsa::{Signature, SigningKey};
 use p256::pkcs8::DecodePrivateKey;
+use p256::SecretKey;
 
 use rust_mdl::{
     AdditionalData, AssembleRequest, BlerifyClient, DrivingCode, DrivingPrivilege, GenerateRequest,
@@ -61,8 +62,7 @@ async fn main() -> Result<()> {
     );
     let signing_key_pem = std::fs::read_to_string(&cfg.signing_key_path)
         .with_context(|| format!("reading {}", cfg.signing_key_path.display()))?;
-    let signing_key = SigningKey::from_pkcs8_pem(&signing_key_pem)
-        .map_err(|e| anyhow::anyhow!("parsing PKCS#8 EC P-256 private key: {e}"))?;
+    let signing_key = parse_signing_key(&signing_key_pem)?;
 
     println!("→ loading issuer cert from {}", cfg.cert_path.display());
     let issuer_cert = std::fs::read_to_string(&cfg.cert_path)
@@ -227,4 +227,17 @@ fn env_or_default_path(key: &str, default: &str) -> PathBuf {
 
 fn required_env(key: &str) -> Result<String> {
     std::env::var(key).with_context(|| format!("required env var {key} is not set"))
+}
+
+/// Parse an EC P-256 private key in either PKCS#8 (`-----BEGIN PRIVATE KEY-----`)
+/// or SEC1 (`-----BEGIN EC PRIVATE KEY-----`) PEM format.
+fn parse_signing_key(pem: &str) -> Result<SigningKey> {
+    let secret = if pem.contains("BEGIN EC PRIVATE KEY") {
+        SecretKey::from_sec1_pem(pem)
+            .map_err(|e| anyhow::anyhow!("parsing SEC1 EC P-256 private key: {e}"))?
+    } else {
+        SecretKey::from_pkcs8_pem(pem)
+            .map_err(|e| anyhow::anyhow!("parsing PKCS#8 EC P-256 private key: {e}"))?
+    };
+    Ok(SigningKey::from(secret))
 }

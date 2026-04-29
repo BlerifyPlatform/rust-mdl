@@ -18,7 +18,7 @@ Drop these three files into `config/` (gitignored — see `config/README.md`):
 | File | Format | Source |
 |---|---|---|
 | `credentials.json` | Service-account JSON | Blerify portal → service accounts |
-| `signing-key.pem` | PKCS#8 EC P-256 private key | Your project's registered signing key |
+| `signing-key.pem` | EC P-256 private key (PKCS#8 or SEC1 PEM both accepted) | Your project's registered signing key |
 | `issuer-cert.pem` | PEM X.509 cert | Wraps the public half of `signing-key.pem` |
 
 ## Required environment variables

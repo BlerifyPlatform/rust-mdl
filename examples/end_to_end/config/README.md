@@ -3,7 +3,7 @@
 ```
 config/
 ├── credentials.json    # YOU SUPPLY — service-account JSON from the Blerify portal
-├── signing-key.pem     # YOU SUPPLY — PKCS#8 EC P-256 private key registered for the project
+├── signing-key.pem     # YOU SUPPLY — EC P-256 private key (PKCS#8 or SEC1 PEM)
 └── issuer-cert.pem     # SHIPPED   — PEM X.509 cert wrapping the matching public key
 ```
 
