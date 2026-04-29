@@ -44,11 +44,20 @@ Drop these three files into `config/` (gitignored — see `config/README.md`):
 The example automatically loads `examples/end_to_end/.env` if present (set
 your env vars there once instead of exporting them every run):
 
-```bash
-cp examples/end_to_end/.env.example examples/end_to_end/.env
-$EDITOR examples/end_to_end/.env       # fill in PROJECT_ID, TEMPLATE_ID, KID
-cargo run --example end_to_end
-```
+1. Copy the template and edit it:
+
+   ```bash
+   cp examples/end_to_end/.env.example examples/end_to_end/.env
+   ```
+
+   Open `examples/end_to_end/.env` in your editor (VS Code, vim, nano, etc.)
+   and fill in `BLERIFY_PROJECT_ID`, `BLERIFY_TEMPLATE_ID`, and `BLERIFY_KID`.
+
+2. Run:
+
+   ```bash
+   cargo run --example end_to_end
+   ```
 
 `.env` is git-ignored; `.env.example` is the committed template. Shell env
 vars still take precedence over `.env` for one-off overrides.
