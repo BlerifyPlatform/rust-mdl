@@ -19,7 +19,7 @@ impl BlerifyClient {
         correlation_id: Option<Uuid>,
     ) -> Result<OnHoldResponse, BlerifyError> {
         let path = format!(
-            "{}/credentials/{}/on-hold",
+            "{}/credentials/{}/onHold",
             self.project_base_path(),
             credential_id
         );
