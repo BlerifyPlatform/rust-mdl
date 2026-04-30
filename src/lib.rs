@@ -13,8 +13,8 @@ pub mod client;
 pub mod credentials;
 pub mod error;
 pub mod generate;
-pub mod revoke;
 pub mod on_hold;
+pub mod revoke;
 pub mod validate;
 
 pub use assemble::{AssembleRequest, AssembleResponse};
@@ -26,6 +26,6 @@ pub use generate::{
     GeneratedCredential, JwkP256, MdlData, NamespaceEntry, Options, OrganizationUser, TemplateInfo,
     ValidityInfo,
 };
-pub use revoke::{RevokeRequest, RevokeResponse, StateChangeMetadata};
 pub use on_hold::OnHoldResponse;
+pub use revoke::{RevokeRequest, RevokeResponse, StateChangeMetadata};
 pub use validate::ValidateResponse;

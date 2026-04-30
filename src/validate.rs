@@ -10,7 +10,7 @@ use crate::error::BlerifyError;
 pub struct ValidateResponse {
     #[serde(default)]
     pub valid: Option<bool>,
-    
+
     #[serde(default)]
     pub status: Option<String>,
 }
