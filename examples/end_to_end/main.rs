@@ -25,8 +25,8 @@ use p256::SecretKey;
 
 use rust_mdl::{
     AdditionalData, AssembleRequest, BlerifyClient, DrivingCode, DrivingPrivilege, GenerateRequest,
-    JwkP256, MdlData, Options, OrganizationUser, RevokeRequest, ServiceAccountCredentials,
-    StateChangeMetadata, ValidityInfo,
+    JwkP256, MdlData, OnHoldResponse, Options, OrganizationUser, RevokeRequest,
+    ServiceAccountCredentials, StateChangeMetadata, ValidateResponse, ValidityInfo,
 };
 
 const DEFAULT_BASE_URL: &str = "https://api.demo.blerify.com";
@@ -175,8 +175,28 @@ async fn main() -> Result<()> {
     println!("       mdoc length: {} hex chars", asm.mdoc.len());
     println!("       mdoc head:  {}…", &asm.mdoc[..32]);
 
-    // ---------------------------------------------------------------- 4. revoke
-    println!("\n[cleanup] revoke — PUT /credentials/{{id}}/revoke");
+    // ---------------------------------------------------------------- 4. validate
+    println!("\n[4/5] validate — GET /credentials/{{id}}/validate");
+
+    let validate: ValidateResponse = client
+        .validate(&gen.credential.id, None)
+        .await
+        .context("validate")?;
+
+    println!("       validate result: {:?}", validate);
+
+    // ---------------------------------------------------------------- 5. onHold
+    println!("\n[5/6] onHold — PUT /credentials/{{id}}/onHold");
+
+    let on_hold: OnHoldResponse = client
+        .on_hold(&gen.credential.id, None)
+        .await
+        .context("onHold")?;
+
+    println!("       onHold status: {}", on_hold.status);
+
+    // ---------------------------------------------------------------- 6. revoke
+    println!("\n[6/6] revoke — PUT /credentials/{{id}}/revoke");
     client
         .revoke(
             &gen.credential.id,
