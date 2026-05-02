@@ -136,9 +136,9 @@ async fn validate_round_trip_against_staging() {
         .expect("validate succeeds");
 
     assert!(
-        !validate_response.status.is_empty(),
+        validate_response.status.is_some(),
         "status must not be empty"
     );
 
-    eprintln!("validate status: {}", validate_response.status);
+    eprintln!("validate response: {:?}", validate_response);
 }
