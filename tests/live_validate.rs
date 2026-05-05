@@ -64,7 +64,7 @@ async fn validate_round_trip_against_staging() {
         "8-203-1365",
         // Hex-encoded JPEG. Use a minimal placeholder for the integration test;
         // a real issuer would resize and JPEG-encode the citizen photo per
-        // ISO 18013-5 §7.2.2 (FaceTec-grade JPEG, ≤30 KB target — see RNPN cronograma).
+        // // ISO 18013-5 §7.2.2 compliant JPEG image.
         "FFD8FFE000",
         vec![DrivingPrivilege {
             vehicle_category_code: "C".into(),

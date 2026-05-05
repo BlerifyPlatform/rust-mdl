@@ -23,7 +23,7 @@ impl BlerifyClient {
         correlation_id: Option<Uuid>,
     ) -> Result<ValidateResponse, BlerifyError> {
         let path = format!(
-            "{}/credentials/{}/validate",
+            "{}/credentials/{}/signature/validate",
             self.project_base_path(),
             credential_id
         );
