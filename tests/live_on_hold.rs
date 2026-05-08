@@ -19,7 +19,7 @@ use rust_mdl::generate::{
     OrganizationUser, ValidityInfo,
 };
 use rust_mdl::{BlerifyClient, ServiceAccountCredentials};
-
+use rust_mdl::{OnHoldRequest, StateChangeMetadata};
 const FLAG_ENV: &str = "BLERIFY_RUN_LIVE_TESTS";
 const CREDS_PATH_ENV: &str = "BLERIFY_CREDS_PATH";
 const PROJECT_ID_ENV: &str = "BLERIFY_PROJECT_ID";
@@ -111,16 +111,27 @@ async fn on_hold_round_trip_against_staging() {
         .expect("generate succeeds");
 
     let on_hold_response = client
-        .on_hold(&response.credential.id, None)
+       .on_hold(
+    &response.credential.id,
+    &OnHoldRequest {
+        status: true,
+        metadata: StateChangeMetadata {
+            code: "TEST_HOLD".into(),
+            description: "Test hold".into(),
+            category: "test".into(),
+        },
+    },
+    None,
+)
         .await
         .expect("on_hold succeeds");
 
     assert!(
-        !on_hold_response.status.is_empty(),
+        !on_hold_response.extra.is_null(),
         "status must not be empty"
     );
 
-    eprintln!("onHold status: {}", on_hold_response.status);
+    eprintln!("onHold status: {}", on_hold_response.extra);
 
     assert!(
         response.credential.id.starts_with("0x"),
