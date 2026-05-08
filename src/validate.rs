@@ -1,5 +1,6 @@
 use reqwest::Method;
 use serde::Deserialize;
+use serde_json::Value;
 use tracing::{debug, instrument};
 use uuid::Uuid;
 
@@ -9,10 +10,13 @@ use crate::error::BlerifyError;
 #[derive(Debug, Clone, Deserialize)]
 pub struct ValidateResponse {
     #[serde(default)]
-    pub valid: Option<bool>,
+    pub status: i32,
 
-    #[serde(default)]
-    pub status: Option<String>,
+    #[serde(rename = "verifyInfo", default)]
+    pub verify_info: Value,
+
+    #[serde(flatten)]
+    pub extra: Value,
 }
 
 impl BlerifyClient {
@@ -23,7 +27,7 @@ impl BlerifyClient {
         correlation_id: Option<Uuid>,
     ) -> Result<ValidateResponse, BlerifyError> {
         let path = format!(
-            "{}/credentials/{}/signature/validate",
+            "{}/credentials/{}/validate",
             self.project_base_path(),
             credential_id
         );
@@ -31,7 +35,7 @@ impl BlerifyClient {
         debug!("validate credential");
 
         let response = self
-            .request(Method::GET, &path, correlation_id)
+            .request(Method::POST, &path, correlation_id)
             .await?
             .send()
             .await?;

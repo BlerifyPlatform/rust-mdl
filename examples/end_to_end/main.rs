@@ -22,11 +22,14 @@ use p256::ecdsa::signature::Signer;
 use p256::ecdsa::{Signature, SigningKey};
 use p256::pkcs8::DecodePrivateKey;
 use p256::SecretKey;
+use std::time::Duration;
+use tokio::time::sleep;
 
+use rust_mdl::on_hold::OnHoldRequest;
 use rust_mdl::{
     AdditionalData, AssembleRequest, BlerifyClient, DrivingCode, DrivingPrivilege, GenerateRequest,
     JwkP256, MdlData, OnHoldResponse, Options, OrganizationUser, RevokeRequest,
-    ServiceAccountCredentials, StateChangeMetadata, ValidateResponse, ValidityInfo,
+    ServiceAccountCredentials, StateChangeMetadata, ValidityInfo,
 };
 
 const DEFAULT_BASE_URL: &str = "https://api.demo.blerify.com";
@@ -177,23 +180,37 @@ async fn main() -> Result<()> {
 
     // ---------------------------------------------------------------- 4. validate
     println!("\n[4/5] validate — GET /credentials/{{id}}/validate");
+    sleep(Duration::from_secs(3)).await;
 
-    let validate: ValidateResponse = client
-        .validate(&gen.credential.id, None)
-        .await
-        .context("validate")?;
-
-    println!("       validate result: {:?}", validate);
+    match client.validate(&gen.credential.id, None).await {
+        Ok(validate) => {
+            println!("       validate result: {:?}", validate);
+        }
+        Err(err) => {
+            println!("       validate failed: {:?}", err);
+        }
+    }
 
     // ---------------------------------------------------------------- 5. onHold
     println!("\n[5/6] onHold — PUT /credentials/{{id}}/onHold");
 
     let on_hold: OnHoldResponse = client
-        .on_hold(&gen.credential.id, None)
+        .on_hold(
+            &gen.credential.id,
+            &OnHoldRequest {
+                status: true,
+                metadata: StateChangeMetadata {
+                    code: "EXAMPLE_HOLD".into(),
+                    description: "Temporary hold from example".into(),
+                    category: "test".into(),
+                },
+            },
+            None,
+        )
         .await
         .context("onHold")?;
 
-    println!("       onHold status: {}", on_hold.status);
+    println!("       onHold response: {:?}", on_hold.extra);
 
     // ---------------------------------------------------------------- 6. revoke
     println!("\n[6/6] revoke — PUT /credentials/{{id}}/revoke");
