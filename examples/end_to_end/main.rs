@@ -182,7 +182,16 @@ async fn main() -> Result<()> {
     println!("\n[4/5] validate — GET /credentials/{{id}}/validate");
     sleep(Duration::from_secs(3)).await;
 
-    match client.validate(&gen.credential.id, None).await {
+    match client
+        .validate(
+            &gen.credential.id,
+            &rust_mdl::validate::ValidateRequest {
+                mdoc: asm.mdoc.clone(),
+            },
+            None,
+        )
+        .await
+    {
         Ok(validate) => {
             println!("       validate result: {:?}", validate);
         }

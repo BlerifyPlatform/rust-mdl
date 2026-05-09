@@ -18,8 +18,8 @@ use rust_mdl::generate::{
     AdditionalData, DrivingCode, DrivingPrivilege, GenerateRequest, JwkP256, MdlData, Options,
     OrganizationUser, ValidityInfo,
 };
+use rust_mdl::validate::ValidateRequest;
 use rust_mdl::{BlerifyClient, ServiceAccountCredentials};
-
 const FLAG_ENV: &str = "BLERIFY_RUN_LIVE_TESTS";
 const CREDS_PATH_ENV: &str = "BLERIFY_CREDS_PATH";
 const PROJECT_ID_ENV: &str = "BLERIFY_PROJECT_ID";
@@ -131,14 +131,17 @@ async fn validate_round_trip_against_staging() {
         response.signing_message.len()
     );
     let validate_response = client
-        .validate(&response.credential.id, None)
+        .validate(
+            &response.credential.id,
+            &ValidateRequest {
+                mdoc: "test".into(),
+            },
+            None,
+        )
         .await
         .expect("validate succeeds");
 
-    assert!(
-        validate_response.status.is_some(),
-        "status must not be empty"
-    );
+    assert_eq!(validate_response.status, 1);
 
     eprintln!("validate response: {:?}", validate_response);
 }

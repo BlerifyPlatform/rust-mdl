@@ -18,8 +18,9 @@ use rust_mdl::generate::{
     AdditionalData, DrivingCode, DrivingPrivilege, GenerateRequest, JwkP256, MdlData, Options,
     OrganizationUser, ValidityInfo,
 };
+use rust_mdl::on_hold::OnHoldRequest;
+use rust_mdl::StateChangeMetadata;
 use rust_mdl::{BlerifyClient, ServiceAccountCredentials};
-use rust_mdl::{OnHoldRequest, StateChangeMetadata};
 const FLAG_ENV: &str = "BLERIFY_RUN_LIVE_TESTS";
 const CREDS_PATH_ENV: &str = "BLERIFY_CREDS_PATH";
 const PROJECT_ID_ENV: &str = "BLERIFY_PROJECT_ID";
@@ -111,18 +112,18 @@ async fn on_hold_round_trip_against_staging() {
         .expect("generate succeeds");
 
     let on_hold_response = client
-       .on_hold(
-    &response.credential.id,
-    &OnHoldRequest {
-        status: true,
-        metadata: StateChangeMetadata {
-            code: "TEST_HOLD".into(),
-            description: "Test hold".into(),
-            category: "test".into(),
-        },
-    },
-    None,
-)
+        .on_hold(
+            &response.credential.id,
+            &OnHoldRequest {
+                status: true,
+                metadata: StateChangeMetadata {
+                    code: "TEST_HOLD".into(),
+                    description: "Test hold".into(),
+                    category: "test".into(),
+                },
+            },
+            None,
+        )
         .await
         .expect("on_hold succeeds");
 
