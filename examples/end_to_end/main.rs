@@ -134,7 +134,7 @@ async fn main() -> Result<()> {
         },
     };
 
-    println!("\n[1/3] generate — POST /credentials");
+    println!("\n[1/5] generate — POST /credentials");
     let gen = client
         .generate(&gen_request, None)
         .await
@@ -146,7 +146,7 @@ async fn main() -> Result<()> {
     );
 
     // ---------------------------------------------------------------- 2. sign locally
-    println!("\n[2/3] sign locally with EC P-256 (ES256)");
+    println!("\n[2/5] sign locally with EC P-256 (ES256)");
     // `signingMessage` is standard base64 (php-mdl uses `base64_decode()` which
     // is standard-alphabet). Some senders return URL-safe base64 instead, so
     // fall back to URL-safe on alphabet mismatch.
@@ -161,7 +161,7 @@ async fn main() -> Result<()> {
     println!("       signature: {}…", &signature_hex[..32]);
 
     // ---------------------------------------------------------------- 3. assemble
-    println!("\n[3/3] assemble — PUT /credentials/{{id}}/sign");
+    println!("\n[3/5] assemble — PUT /credentials/{{id}}/sign");
     let asm = client
         .assemble(
             &gen.credential.id,
