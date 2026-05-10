@@ -22,11 +22,14 @@ use p256::ecdsa::signature::Signer;
 use p256::ecdsa::{Signature, SigningKey};
 use p256::pkcs8::DecodePrivateKey;
 use p256::SecretKey;
+use std::time::Duration;
+use tokio::time::sleep;
 
+use rust_mdl::on_hold::OnHoldRequest;
 use rust_mdl::{
     AdditionalData, AssembleRequest, BlerifyClient, DrivingCode, DrivingPrivilege, GenerateRequest,
-    JwkP256, MdlData, Options, OrganizationUser, RevokeRequest, ServiceAccountCredentials,
-    StateChangeMetadata, ValidityInfo,
+    JwkP256, MdlData, OnHoldResponse, Options, OrganizationUser, RevokeRequest,
+    ServiceAccountCredentials, StateChangeMetadata, ValidityInfo,
 };
 
 const DEFAULT_BASE_URL: &str = "https://api.demo.blerify.com";
@@ -131,7 +134,7 @@ async fn main() -> Result<()> {
         },
     };
 
-    println!("\n[1/3] generate — POST /credentials");
+    println!("\n[1/5] generate — POST /credentials");
     let gen = client
         .generate(&gen_request, None)
         .await
@@ -143,7 +146,7 @@ async fn main() -> Result<()> {
     );
 
     // ---------------------------------------------------------------- 2. sign locally
-    println!("\n[2/3] sign locally with EC P-256 (ES256)");
+    println!("\n[2/5] sign locally with EC P-256 (ES256)");
     // `signingMessage` is standard base64 (php-mdl uses `base64_decode()` which
     // is standard-alphabet). Some senders return URL-safe base64 instead, so
     // fall back to URL-safe on alphabet mismatch.
@@ -158,7 +161,7 @@ async fn main() -> Result<()> {
     println!("       signature: {}…", &signature_hex[..32]);
 
     // ---------------------------------------------------------------- 3. assemble
-    println!("\n[3/3] assemble — PUT /credentials/{{id}}/sign");
+    println!("\n[3/5] assemble — PUT /credentials/{{id}}/sign");
     let asm = client
         .assemble(
             &gen.credential.id,
@@ -175,8 +178,51 @@ async fn main() -> Result<()> {
     println!("       mdoc length: {} hex chars", asm.mdoc.len());
     println!("       mdoc head:  {}…", &asm.mdoc[..32]);
 
-    // ---------------------------------------------------------------- 4. revoke
-    println!("\n[cleanup] revoke — PUT /credentials/{{id}}/revoke");
+    // ---------------------------------------------------------------- 4. validate
+    println!("\n[4/5] validate — GET /credentials/{{id}}/validate");
+    sleep(Duration::from_secs(3)).await;
+
+    match client
+        .validate(
+            &gen.credential.id,
+            &rust_mdl::validate::ValidateRequest {
+                mdoc: asm.mdoc.clone(),
+            },
+            None,
+        )
+        .await
+    {
+        Ok(validate) => {
+            println!("       validate result: {:?}", validate);
+        }
+        Err(err) => {
+            println!("       validate failed: {:?}", err);
+        }
+    }
+
+    // ---------------------------------------------------------------- 5. onHold
+    println!("\n[5/6] onHold — PUT /credentials/{{id}}/onHold");
+
+    let on_hold: OnHoldResponse = client
+        .on_hold(
+            &gen.credential.id,
+            &OnHoldRequest {
+                status: true,
+                metadata: StateChangeMetadata {
+                    code: "EXAMPLE_HOLD".into(),
+                    description: "Temporary hold from example".into(),
+                    category: "test".into(),
+                },
+            },
+            None,
+        )
+        .await
+        .context("onHold")?;
+
+    println!("       onHold response: {:?}", on_hold.extra);
+
+    // ---------------------------------------------------------------- 6. revoke
+    println!("\n[6/6] revoke — PUT /credentials/{{id}}/revoke");
     client
         .revoke(
             &gen.credential.id,
