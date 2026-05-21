@@ -92,6 +92,7 @@ async fn validate_round_trip_against_staging() {
             certificate: include_str!("fixtures/issuer-cert.pem").to_string(),
             kid: "gpWQnAjvAdLWCqQAFNglAVHlqVajGmZTPQ".into(),
             namespaces: vec![],
+            document_type: None,
         },
         organization_user: OrganizationUser {
             id: "8-203-1365".into(),

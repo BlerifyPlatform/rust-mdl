@@ -32,6 +32,32 @@ pub struct AdditionalData {
     pub kid: String,
     #[serde(default)]
     pub namespaces: Vec<NamespaceEntry>,
+    /// Discriminator that tells the Issuance API which document profile to
+    /// apply. When `None` (omitted from the wire) the server defaults to
+    /// the mDL profile for back-compat. Use [`document_type`] constants for
+    /// the known values.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub document_type: Option<String>,
+}
+
+/// Known values for [`AdditionalData::document_type`]. The server validates
+/// document-profile-specific requirements (e.g. `driving_privileges` is
+/// mandatory only on the mDL profile) based on this discriminator.
+pub mod document_type {
+    /// ISO/IEC 18013-5 mobile driving licence. The server requires the
+    /// mDL-specific fields (`driving_privileges`, …). This is the default
+    /// when [`AdditionalData::document_type`] is `None`.
+    pub const MDL: &str = "mDL";
+
+    /// Generic photo-ID identity document carried on the same mdoc
+    /// transport (e.g. national ID cards). The server relaxes the
+    /// mDL-only field requirements; DL-specific elements
+    /// (`driving_privileges`, `un_distinguishing_sign`) are skipped from
+    /// the credential when not supplied. Forward-compatible with
+    /// ISO/IEC 23220: when the server adopts ISO 23220, the mdoc
+    /// `docType` emitted for this profile can change without callers
+    /// needing a further API update.
+    pub const IDENTITY_DOCUMENT: &str = "identityDocument";
 }
 
 /// mDL data elements per ISO/IEC 18013-5:2021 §7.2.1 Table 5.
@@ -355,6 +381,7 @@ mod tests {
                     .into(),
                 kid: "gpWQnAjvAdLWCqQAFNglAVHlqVajGmZTPQ".into(),
                 namespaces: vec![],
+                document_type: None,
             },
             organization_user: OrganizationUser {
                 id: "8-203-1365".into(),

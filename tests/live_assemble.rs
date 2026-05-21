@@ -99,6 +99,7 @@ async fn generate_then_assemble_round_trip() {
             certificate: cert.clone(),
             kid: kid.into(),
             namespaces: vec![],
+            document_type: None,
         },
         organization_user: OrganizationUser {
             id: "8-203-1365".into(),
