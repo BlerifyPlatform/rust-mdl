@@ -22,9 +22,9 @@ pub use client::BlerifyClient;
 pub use credentials::ServiceAccountCredentials;
 pub use error::BlerifyError;
 pub use generate::{
-    AdditionalData, DrivingCode, DrivingPrivilege, GenerateRequest, GenerateResponse,
-    GeneratedCredential, JwkP256, MdlData, NamespaceEntry, Options, OrganizationUser, TemplateInfo,
-    ValidityInfo,
+    document_type, AdditionalData, DrivingCode, DrivingPrivilege, GenerateRequest,
+    GenerateResponse, GeneratedCredential, JwkP256, MdlData, NamespaceEntry, Options,
+    OrganizationUser, TemplateInfo, ValidityInfo,
 };
 pub use on_hold::OnHoldResponse;
 pub use revoke::{RevokeRequest, RevokeResponse, StateChangeMetadata};

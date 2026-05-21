@@ -121,6 +121,7 @@ async fn main() -> Result<()> {
             certificate: issuer_cert.clone(),
             kid: cfg.kid.clone(),
             namespaces: vec![],
+            document_type: None,
         },
         organization_user: OrganizationUser {
             id: "8-203-1365".into(),
