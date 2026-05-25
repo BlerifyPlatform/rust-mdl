@@ -70,7 +70,7 @@ pub mod document_type {
 /// let mut data = MdlData::new(
 ///     "Doe", "John", "1987-03-15", "2025-10-15", "2028-09-30",
 ///     "US", "Acme", "8-203-1365",
-///     /* portrait JPEG hex */ "FFD8FF...".to_string(),
+///     /* portrait JPEG, standard base64 */ "/9j/4AAQSkZJRg...".to_string(),
 ///     vec![DrivingPrivilege { /* ... */ }],
 ///     "PA",
 /// );
@@ -92,7 +92,10 @@ pub struct MdlData {
     pub issuing_country: String,
     pub issuing_authority: String,
     pub document_number: String,
-    /// Hex-encoded JPEG/JPEG2000 bytes (uppercase or lowercase). Per
+    /// Standard base64-encoded JPEG/JPEG2000 bytes (RFC 4648 §4, with
+    /// padding). The server binds this field as `[]byte` and decodes it
+    /// with standard base64, so other encodings (hex, base64url) break
+    /// on any payload whose length isn't a multiple of 4. Per
     /// ISO 18013-2:2020 Annex D for the portrait image format.
     pub portrait: String,
     pub driving_privileges: Vec<DrivingPrivilege>,
@@ -143,7 +146,7 @@ impl MdlData {
         issuing_country: impl Into<String>,
         issuing_authority: impl Into<String>,
         document_number: impl Into<String>,
-        portrait_hex: impl Into<String>,
+        portrait_base64: impl Into<String>,
         driving_privileges: Vec<DrivingPrivilege>,
         un_distinguishing_sign: impl Into<String>,
     ) -> Self {
@@ -156,7 +159,7 @@ impl MdlData {
             issuing_country: issuing_country.into(),
             issuing_authority: issuing_authority.into(),
             document_number: document_number.into(),
-            portrait: portrait_hex.into(),
+            portrait: portrait_base64.into(),
             driving_privileges,
             un_distinguishing_sign: un_distinguishing_sign.into(),
             administrative_number: None,
