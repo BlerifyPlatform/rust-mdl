@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "1987-03-15", "2025-10-15",            // birth_date, issue_date
         "2028-09-30", "US",                    // expiry_date, issuing_country
         "Acme", "8-203-1365",                  // issuing_authority, document_number
-        "FFD8FFE000…",                          // portrait (hex JPEG bytes)
+        "/9j/4AAQSkZJRg…",                       // portrait (standard base64 JPEG bytes)
         vec![DrivingPrivilege {
             vehicle_category_code: "C".into(),
             issue_date: "2025-08-25".into(),

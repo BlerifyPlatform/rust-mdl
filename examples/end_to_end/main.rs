@@ -88,10 +88,10 @@ async fn main() -> Result<()> {
         "US",
         "Blerify Demo",
         "8-203-1365",
-        // Hex-encoded JPEG bytes. Bundled as a fixture so the example runs
-        // out-of-the-box; a real issuer would resize and JPEG-encode the
-        // citizen photo per ISO 18013-5 §7.2.2.
-        include_str!("fixtures/portrait.hex").trim(),
+        // Standard base64-encoded JPEG bytes. Bundled as a fixture so the
+        // example runs out-of-the-box; a real issuer would resize and
+        // JPEG-encode the citizen photo per ISO 18013-5 §7.2.2.
+        include_str!("fixtures/portrait.base64").trim(),
         vec![DrivingPrivilege {
             vehicle_category_code: "C".into(),
             issue_date: "2025-08-25".into(),
