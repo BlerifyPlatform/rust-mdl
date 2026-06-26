@@ -177,7 +177,20 @@ async fn main() -> Result<()> {
         .await
         .context("assemble")?;
     println!("       mdoc length: {} hex chars", asm.mdoc.len());
+    print!("         mdoc body: {}", asm.mdoc);
     println!("       mdoc head:  {}…", &asm.mdoc[..32]);
+
+    // Decode the hex mdoc into readable JSON (tag-24 items unwrapped) so the
+    // issued data elements — e.g. an embedded `verificationProof` — are visible.
+    match asm.decode() {
+        Ok(decoded) => {
+            println!(
+                "       decoded mdoc:\n{}",
+                serde_json::to_string_pretty(&decoded).unwrap_or_else(|_| decoded.to_string())
+            );
+        }
+        Err(err) => println!("       mdoc decode failed: {err}"),
+    }
 
     // ---------------------------------------------------------------- 4. validate
     println!("\n[4/5] validate — GET /credentials/{{id}}/validate");

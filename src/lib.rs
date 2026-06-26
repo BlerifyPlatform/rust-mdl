@@ -6,11 +6,15 @@
 //! - [`BlerifyClient::generate`] — `POST /credentials`
 //! - [`BlerifyClient::assemble`] — `PUT /credentials/{id}/sign`
 //! - [`BlerifyClient::revoke`]   — `PUT /credentials/{id}/revoke`
+//!
+//! The hex mdoc returned by `assemble` can be decoded for inspection with
+//! [`decode::decode_mdoc`] (or [`AssembleResponse::decode`]).
 
 pub mod assemble;
 pub mod auth;
 pub mod client;
 pub mod credentials;
+pub mod decode;
 pub mod error;
 pub mod generate;
 pub mod on_hold;
@@ -20,6 +24,7 @@ pub mod validate;
 pub use assemble::{AssembleRequest, AssembleResponse};
 pub use client::BlerifyClient;
 pub use credentials::ServiceAccountCredentials;
+pub use decode::decode_mdoc;
 pub use error::BlerifyError;
 pub use generate::{
     document_type, AdditionalData, DrivingCode, DrivingPrivilege, GenerateRequest,
