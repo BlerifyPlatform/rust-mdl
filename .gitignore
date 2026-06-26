@@ -1,2 +1,6 @@
 target/
 Cargo.lock
+# local-only test helper
+examples/claim_status.rs
+# local example env (carries environment-specific identifiers)
+examples/end_to_end/.env-demo

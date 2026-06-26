@@ -18,6 +18,10 @@ pub enum BlerifyError {
     #[error("system time error: {0}")]
     Time(#[from] std::time::SystemTimeError),
 
+    /// The mdoc could not be hex-decoded or parsed as CBOR.
+    #[error("mdoc decode error: {0}")]
+    Decode(String),
+
     /// Non-2xx response from the Issuance API. `body` carries whatever the
     /// server returned (parsed JSON if possible, otherwise raw text).
     #[error("server returned {status}: {}", format_server_detail(.message, .body))]
