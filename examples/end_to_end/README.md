@@ -4,7 +4,7 @@ Runnable demonstration of the full Issuance API flow against any
 environment (default: `https://api.demo.blerify.com`):
 
 ```
-generate → sign locally with EC P-256 (ES256) → assemble → revoke
+roles → generate → sign locally with EC P-256 (ES256) → assemble → validate → onHold → revoke
 ```
 
 ## What you provide
@@ -62,9 +62,9 @@ your env vars there once instead of exporting them every run):
 `.env` is git-ignored; `.env.example` is the committed template. Shell env
 vars still take precedence over `.env` for one-off overrides.
 
-You should see four steps print, ending with `✓ end-to-end flow completed`.
-The example revokes its own test credential at the end so the run is
-self-cleaning.
+You should see the flow steps print, starting with the service account's own
+roles and ending with `✓ end-to-end flow completed`. The example revokes its
+own test credential at the end so the run is self-cleaning.
 
 ## Verbose logs
 

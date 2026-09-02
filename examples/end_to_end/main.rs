@@ -1,5 +1,6 @@
-//! End-to-end example: generate → sign locally with EC P-256 → assemble → revoke
-//! against a real Blerify Issuance API environment (default: `demo`).
+//! End-to-end example: roles → generate → sign locally with EC P-256 →
+//! assemble → validate → onHold → revoke against a real Blerify Issuance API
+//! environment (default: `demo`).
 //!
 //! See `README.md` in this directory for setup. In short, drop your
 //! service-account JSON, your project's signing private key (PEM), and
@@ -78,7 +79,24 @@ async fn main() -> Result<()> {
         client.project_id(),
     );
 
-    // ---------------------------------------------------------------- 1. generate
+    // ---------------------------------------------------------------- 1. roles
+    // Preflight: confirm which API roles this service account holds. Identity is
+    // derived from the access token, so the endpoint takes no parameters.
+    println!("\n[1/7] roles — GET /api/v1/iam/serviceAccounts/me/roles");
+    let roles = client.get_own_roles(None).await.context("get_own_roles")?;
+    for role in &roles {
+        match (&role.project_id, &role.project_name) {
+            (Some(id), name) => println!(
+                "       {} → project {} ({})",
+                role.name,
+                id,
+                name.as_deref().unwrap_or("unknown")
+            ),
+            (None, _) => println!("       {} (organization-level)", role.name),
+        }
+    }
+
+    // ---------------------------------------------------------------- 2. generate
     let mut mdl_data = MdlData::new(
         "Doe",
         "John",
@@ -135,7 +153,7 @@ async fn main() -> Result<()> {
         },
     };
 
-    println!("\n[1/5] generate — POST /credentials");
+    println!("\n[2/7] generate — POST /credentials");
     let gen = client
         .generate(&gen_request, None)
         .await
@@ -146,8 +164,8 @@ async fn main() -> Result<()> {
         gen.signing_message.len()
     );
 
-    // ---------------------------------------------------------------- 2. sign locally
-    println!("\n[2/5] sign locally with EC P-256 (ES256)");
+    // ---------------------------------------------------------------- 3. sign locally
+    println!("\n[3/7] sign locally with EC P-256 (ES256)");
     // `signingMessage` is standard base64 (php-mdl uses `base64_decode()` which
     // is standard-alphabet). Some senders return URL-safe base64 instead, so
     // fall back to URL-safe on alphabet mismatch.
@@ -161,8 +179,8 @@ async fn main() -> Result<()> {
     debug_assert_eq!(signature_hex.len(), 128);
     println!("       signature: {}…", &signature_hex[..32]);
 
-    // ---------------------------------------------------------------- 3. assemble
-    println!("\n[3/5] assemble — PUT /credentials/{{id}}/sign");
+    // ---------------------------------------------------------------- 4. assemble
+    println!("\n[4/7] assemble — PUT /credentials/{{id}}/sign");
     let asm = client
         .assemble(
             &gen.credential.id,
@@ -192,8 +210,8 @@ async fn main() -> Result<()> {
         Err(err) => println!("       mdoc decode failed: {err}"),
     }
 
-    // ---------------------------------------------------------------- 4. validate
-    println!("\n[4/5] validate — GET /credentials/{{id}}/validate");
+    // ---------------------------------------------------------------- 5. validate
+    println!("\n[5/7] validate — GET /credentials/{{id}}/validate");
     sleep(Duration::from_secs(3)).await;
 
     match client
@@ -214,8 +232,8 @@ async fn main() -> Result<()> {
         }
     }
 
-    // ---------------------------------------------------------------- 5. onHold
-    println!("\n[5/6] onHold — PUT /credentials/{{id}}/onHold");
+    // ---------------------------------------------------------------- 6. onHold
+    println!("\n[6/7] onHold — PUT /credentials/{{id}}/onHold");
 
     let on_hold: OnHoldResponse = client
         .on_hold(
@@ -235,8 +253,8 @@ async fn main() -> Result<()> {
 
     println!("       onHold response: {:?}", on_hold.extra);
 
-    // ---------------------------------------------------------------- 6. revoke
-    println!("\n[6/6] revoke — PUT /credentials/{{id}}/revoke");
+    // ---------------------------------------------------------------- 7. revoke
+    println!("\n[7/7] revoke — PUT /credentials/{{id}}/revoke");
     client
         .revoke(
             &gen.credential.id,
