@@ -6,6 +6,7 @@
 //! - [`BlerifyClient::generate`] — `POST /credentials`
 //! - [`BlerifyClient::assemble`] — `PUT /credentials/{id}/sign`
 //! - [`BlerifyClient::revoke`]   — `PUT /credentials/{id}/revoke`
+//! - [`BlerifyClient::get_own_roles`] — `GET /api/v1/iam/serviceAccounts/me/roles`
 //!
 //! The hex mdoc returned by `assemble` can be decoded for inspection with
 //! [`decode::decode_mdoc`] (or [`AssembleResponse::decode`]).
@@ -19,6 +20,7 @@ pub mod error;
 pub mod generate;
 pub mod on_hold;
 pub mod revoke;
+pub mod roles;
 pub mod validate;
 
 pub use assemble::{AssembleRequest, AssembleResponse};
@@ -33,4 +35,5 @@ pub use generate::{
 };
 pub use on_hold::OnHoldResponse;
 pub use revoke::{RevokeRequest, RevokeResponse, StateChangeMetadata};
+pub use roles::ServiceAccountRole;
 pub use validate::ValidateResponse;

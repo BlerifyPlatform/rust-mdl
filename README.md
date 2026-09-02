@@ -18,6 +18,9 @@ via [`BlerifyError::Server`].
 - `assemble()` — `PUT .../credentials/{cid}/sign` to combine the unsigned
   credential with an ES256 signature produced externally (HSM/KMS) and return
   the final hex-encoded CBOR mdoc.
+- `get_own_roles()` — `GET /api/v1/iam/serviceAccounts/me/roles`, the API
+  roles granted to the authenticated service account (with project id and
+  name for project-scoped roles).
 
 Not in scope: server-side test signing (`/crypto/sign/es256`), credential
 hold/revoke/validate, wallet-side presentation, W3C VC issuance, ISO 23220.
