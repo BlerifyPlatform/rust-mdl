@@ -17,6 +17,12 @@ pub struct ValidateResponse {
     #[serde(default)]
     pub status: i32,
 
+    #[serde(rename = "docType", default)]
+    pub doc_type: Option<String>,
+
+    #[serde(default)]
+    pub data: Value,
+
     #[serde(rename = "verifyInfo", default)]
     pub verify_info: Value,
 
