@@ -21,6 +21,7 @@ pub mod generate;
 pub mod on_hold;
 pub mod revoke;
 pub mod roles;
+pub mod status;
 pub mod validate;
 
 pub use assemble::{AssembleRequest, AssembleResponse};
@@ -36,4 +37,5 @@ pub use generate::{
 pub use on_hold::OnHoldResponse;
 pub use revoke::{RevokeRequest, RevokeResponse, StateChangeMetadata};
 pub use roles::ServiceAccountRole;
+pub use status::{CredentialStatus, StatusResponse};
 pub use validate::ValidateResponse;

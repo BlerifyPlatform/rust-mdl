@@ -1,6 +1,6 @@
 //! End-to-end example: roles → generate → sign locally with EC P-256 →
-//! assemble → validate → onHold → revoke against a real Blerify Issuance API
-//! environment (default: `demo`).
+//! assemble → validate → status → onHold → revoke → status against a real
+//! Blerify Issuance API environment (default: `demo`).
 //!
 //! See `README.md` in this directory for setup. In short, drop your
 //! service-account JSON, your project's signing private key (PEM), and
@@ -28,9 +28,9 @@ use tokio::time::sleep;
 
 use rust_mdl::on_hold::OnHoldRequest;
 use rust_mdl::{
-    AdditionalData, AssembleRequest, BlerifyClient, DrivingCode, DrivingPrivilege, GenerateRequest,
-    JwkP256, MdlData, OnHoldResponse, Options, OrganizationUser, RevokeRequest,
-    ServiceAccountCredentials, StateChangeMetadata, ValidityInfo,
+    AdditionalData, AssembleRequest, BlerifyClient, CredentialStatus, DrivingCode,
+    DrivingPrivilege, GenerateRequest, JwkP256, MdlData, OnHoldResponse, Options, OrganizationUser,
+    RevokeRequest, ServiceAccountCredentials, StateChangeMetadata, ValidityInfo,
 };
 
 const DEFAULT_BASE_URL: &str = "https://api.demo.blerify.com";
@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
     // ---------------------------------------------------------------- 1. roles
     // Preflight: confirm which API roles this service account holds. Identity is
     // derived from the access token, so the endpoint takes no parameters.
-    println!("\n[1/7] roles — GET /api/v1/iam/serviceAccounts/me/roles");
+    println!("\n[1/9] roles — GET /api/v1/iam/serviceAccounts/me/roles");
     let roles = client.get_own_roles(None).await.context("get_own_roles")?;
     for role in &roles {
         match (&role.project_id, &role.project_name) {
@@ -153,7 +153,7 @@ async fn main() -> Result<()> {
         },
     };
 
-    println!("\n[2/7] generate — POST /credentials");
+    println!("\n[2/9] generate — POST /credentials");
     let gen = client
         .generate(&gen_request, None)
         .await
@@ -165,7 +165,7 @@ async fn main() -> Result<()> {
     );
 
     // ---------------------------------------------------------------- 3. sign locally
-    println!("\n[3/7] sign locally with EC P-256 (ES256)");
+    println!("\n[3/9] sign locally with EC P-256 (ES256)");
     // `signingMessage` is standard base64 (php-mdl uses `base64_decode()` which
     // is standard-alphabet). Some senders return URL-safe base64 instead, so
     // fall back to URL-safe on alphabet mismatch.
@@ -180,7 +180,7 @@ async fn main() -> Result<()> {
     println!("       signature: {}…", &signature_hex[..32]);
 
     // ---------------------------------------------------------------- 4. assemble
-    println!("\n[4/7] assemble — PUT /credentials/{{id}}/sign");
+    println!("\n[4/9] assemble — PUT /credentials/{{id}}/sign");
     let asm = client
         .assemble(
             &gen.credential.id,
@@ -211,7 +211,7 @@ async fn main() -> Result<()> {
     }
 
     // ---------------------------------------------------------------- 5. validate
-    println!("\n[5/7] validate — GET /credentials/{{id}}/validate");
+    println!("\n[5/9] validate — GET /credentials/{{id}}/validate");
     sleep(Duration::from_secs(3)).await;
 
     match client
@@ -232,8 +232,16 @@ async fn main() -> Result<()> {
         }
     }
 
-    // ---------------------------------------------------------------- 6. onHold
-    println!("\n[6/7] onHold — PUT /credentials/{{id}}/onHold");
+    // ---------------------------------------------------------------- 6. status
+    println!("\n[6/9] status — GET /credentials/{{id}}/status");
+    let status = client
+        .status(&gen.credential.id, None)
+        .await
+        .context("status")?;
+    println!("       status: {:?}", status.status);
+
+    // ---------------------------------------------------------------- 7. onHold
+    println!("\n[7/9] onHold — PUT /credentials/{{id}}/onHold");
 
     let on_hold: OnHoldResponse = client
         .on_hold(
@@ -253,8 +261,8 @@ async fn main() -> Result<()> {
 
     println!("       onHold response: {:?}", on_hold.extra);
 
-    // ---------------------------------------------------------------- 7. revoke
-    println!("\n[7/7] revoke — PUT /credentials/{{id}}/revoke");
+    // ---------------------------------------------------------------- 8. revoke
+    println!("\n[8/9] revoke — PUT /credentials/{{id}}/revoke");
     client
         .revoke(
             &gen.credential.id,
@@ -269,7 +277,33 @@ async fn main() -> Result<()> {
         )
         .await
         .context("revoke")?;
-    println!("       revoked.\n");
+    println!("       revoke accepted.");
+
+    // ---------------------------------------------------------------- 9. status
+    // The revoke returns 202 before the revocation is recorded on chain, so
+    // the status changes only once the transaction is mined. Poll briefly.
+    println!("\n[9/9] status after revoke — GET /credentials/{{id}}/status");
+    let mut last = None;
+    for _ in 0..12 {
+        sleep(Duration::from_secs(5)).await;
+        let status = client
+            .status(&gen.credential.id, None)
+            .await
+            .context("status after revoke")?;
+        println!("       status: {:?}", status.status);
+        if status.status == CredentialStatus::Revoked {
+            println!("       revoked at: {:?}", status.revoked_at);
+            last = Some(status.status);
+            break;
+        }
+        last = Some(status.status);
+    }
+    if last != Some(CredentialStatus::Revoked) {
+        println!(
+            "       not revoked on chain yet; it will show REVOKED once the transaction is mined."
+        );
+    }
+    println!();
 
     println!("✓ end-to-end flow completed against {}", cfg.base_url);
     Ok(())
